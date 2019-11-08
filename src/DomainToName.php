@@ -8,12 +8,13 @@
 
 		public function __construct($domain) {
 			$this->domain = $domain;
-			$url = "http://" . $this->getDomain();
+			$url = "http://$domain/";
 			$ch = curl_init($url);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+			curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (iPhone; CPU iPhone OS 8_2 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) GSA/5.2.43972 Mobile/12D508 Safari/600.1.4");
 			$content = curl_exec($ch);
 
 			$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -44,7 +45,7 @@
 			return $dom;
 		}
 
-		public function getFromOGTag($content) {
+		private function getFromOGTag($content) {
 			$dom = $this->getDOM($content);
 			$metas = $dom->getElementsByTagName("meta");
 			foreach ($metas as $meta) {
@@ -54,20 +55,25 @@
 			}
 		}
 
-		public function getChildDomainName() {
+		private function getChildDomainName() {
 			return strtolower(explode(".", $this->getDomain())[0]);
 		}
 
-		public function getFromTitle($content) {
+		private function getFromTitle($content) {
 			$dom = $this->getDOM($content);
 			$title = $dom->getElementsByTagName("title");
 			if ($title) {
-				$title = $title[0];
+				$title = $title[0]->nodeValue;
+				$titleContent = $title;
 				$title = strtolower($title);
-				$title = str_replace(" ", $title);
+				$title = str_replace(" ", "", $title);
 				$domainName = $this->getChildDomainName();
 				if (strpos($title, $domainName) !== false) {
-					
+					$pattern = implode("\\s*", str_split($domainName));
+					preg_match("/$pattern/i", $titleContent, $result);
+					if ($result && isset($result[0])) {
+						return $result[0];
+					}
 				}
 			}
 		}
@@ -75,10 +81,14 @@
 		public function getName() {
 			$content = $this->getContent();
 			if ($this->exists() && $content) {
-				if ($name = $this->getFromOGTag($content)) {
+				$name = $this->getFromOGTag($content);
+				if ($name) {
 					return $name;
-				} else if ($name = $this->getFromTitle($content)) {
-					return $name;
+				} else {
+					$name = $this->getFromTitle($content);
+					if ($name) {
+						return $name;
+					}
 				}
 			}
 		}

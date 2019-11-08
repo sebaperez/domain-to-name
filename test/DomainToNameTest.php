@@ -17,7 +17,14 @@
 
 		public function test_get_name_from_ogtag() {
 			$domaintoname = new DomainToName("sheraton.marriott.com");
+			$this->assertTrue($domaintoname->exists());
 			$this->assertEquals("Sheraton Hotels & Resorts", $domaintoname->getName());
+		}
+
+		public function test_get_name_from_title() {
+			$domaintoname = new DomainToName("motobuykers.es");
+			$this->assertTrue($domaintoname->exists());
+			$this->assertEquals("Motobuykers", $domaintoname->getName());
 		}
 
 	}
