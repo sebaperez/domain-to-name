@@ -24,7 +24,6 @@
 				$this->content = $content;
 				$this->_exists = true;
 			} else {
-				echo("$domain without 200\n");
 				$this->content = "";
 				$this->_exists = false;
 			}
@@ -80,6 +79,7 @@
 				$titleContent = strtr($titleContent, $unwanted_array);
 
 				$domainName = $this->getChildDomainName();
+
 				if (strpos($title, $domainName) !== false) {
 					$pattern = implode("\\s*", str_split($domainName));
 					preg_match("/$pattern/i", $titleContent, $result);
@@ -95,11 +95,12 @@
 			$title = $dom->getElementsByTagName("title");
 			if ($title) {
 				$title = $title[0]->nodeValue;
-			}
-			if (strpos($title, "|") !== false) {
-				return explode("|", $title)[0];
-			} else if (strpos($title, "-") !== false) {
-				return explode("-", $title)[0];
+
+				if (strpos($title, "|") !== false) {
+					return explode("|", $title)[0];
+				} else if (strpos($title, "-") !== false) {
+					return explode("-", $title)[0];
+				}
 			}
 		}
 
