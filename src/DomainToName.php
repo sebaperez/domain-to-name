@@ -106,22 +106,32 @@
 
 		public function getName() {
 			$content = $this->getContent();
+
+			$returnedName = null;
+
 			if ($this->exists() && $content) {
 				$name = $this->getFromOGTag($content);
 				if ($name) {
-					return $name;
+					$returnedName = $name;
 				} else {
 					$name = $this->getFromTitle($content);
 					if ($name) {
-						return $name;
+						$returnedName = $name;
 					} else {
 						$name = $this->getFromTitleParsing($content);
 						if ($name) {
-							return $name;
+							$returnedName = $name;
 						}
 					}
 				}
 			}
+			return $this->clear($returnedName);
+		}
+
+		private function clear($string) {
+			$s = trim($string);
+			$s = preg_replace("/\r|\n/", "", $s);
+			return $s;
 		}
 
 	}
