@@ -15,6 +15,8 @@
 			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 			curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (iPhone; CPU iPhone OS 8_2 like Mac OS X) AppleWebKit/600.1.4 (KHTML, like Gecko) GSA/5.2.43972 Mobile/12D508 Safari/600.1.4");
+			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5000);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 5000);
 			$content = curl_exec($ch);
 
 			$http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -22,6 +24,7 @@
 				$this->content = $content;
 				$this->_exists = true;
 			} else {
+				echo("$domain without 200\n");
 				$this->content = "";
 				$this->_exists = false;
 			}
@@ -65,8 +68,17 @@
 			if ($title) {
 				$title = $title[0]->nodeValue;
 				$titleContent = $title;
-				$title = strtolower($title);
 				$title = str_replace(" ", "", $title);
+
+				$unwanted_array = array(    'Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+                            'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
+                            'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+                            'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
+                            'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
+				$title = strtr($title, $unwanted_array);
+				$title = strtolower($title);
+				$titleContent = strtr($titleContent, $unwanted_array);
+
 				$domainName = $this->getChildDomainName();
 				if (strpos($title, $domainName) !== false) {
 					$pattern = implode("\\s*", str_split($domainName));
@@ -75,6 +87,19 @@
 						return $result[0];
 					}
 				}
+			}
+		}
+
+		private function getFromTitleParsing($content) {
+			$dom = $this->getDOM($content);
+			$title = $dom->getElementsByTagName("title");
+			if ($title) {
+				$title = $title[0]->nodeValue;
+			}
+			if (strpos($title, "|") !== false) {
+				return explode("|", $title)[0];
+			} else if (strpos($title, "-") !== false) {
+				return explode("-", $title)[0];
 			}
 		}
 
@@ -88,6 +113,11 @@
 					$name = $this->getFromTitle($content);
 					if ($name) {
 						return $name;
+					} else {
+						$name = $this->getFromTitleParsing($content);
+						if ($name) {
+							return $name;
+						}
 					}
 				}
 			}
